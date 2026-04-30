@@ -16,6 +16,7 @@ export const PopularMovieSlider = ({ loadMore, memoizedMovies }: Props) => {
         slidesPerView={1}
         slidesPerGroup={1}
         spaceBetween={12}
+        centeredSlides
         navigation
         autoplay={{
           delay: 2000,
@@ -25,20 +26,22 @@ export const PopularMovieSlider = ({ loadMore, memoizedMovies }: Props) => {
         speed={2000}
         onReachEnd={loadMore}
         breakpoints={{
-          640: { slidesPerView: 2, slidesPerGroup: 2 },
-          768: { slidesPerView: 3, slidesPerGroup: 3 },
-          1024: { slidesPerView: 4, slidesPerGroup: 4 },
+          640: { slidesPerView: 2, slidesPerGroup: 2, centeredSlides: false },
+          768: { slidesPerView: 3, slidesPerGroup: 3, centeredSlides: false },
+          1024: { slidesPerView: 4, slidesPerGroup: 4, centeredSlides: false },
         }}
       >
         {memoizedMovies.map(movie => (
           <SwiperSlide key={movie.id}>
-            <MovieCard
-              id={movie.id}
-              rating_kinoarea={movie.rating_kinoarea}
-              title={movie.title}
-              genres={movie.genres}
-              poster_url={movie.poster_url}
-            />
+            <div className="flex justify-center">
+              <MovieCard
+                id={movie.id}
+                rating_kinoarea={movie.rating_kinoarea}
+                title={movie.title}
+                genres={movie.genres}
+                poster_url={movie.poster_url}
+              />
+            </div>
           </SwiperSlide>
         ))}
       </Swiper>
