@@ -3,6 +3,7 @@ import { Trailer } from '@/types/trailers'
 
 export async function getTrailersServer(
   limit: number,
+  offset: number = 0,
 ): Promise<Trailer[]> {
   const supabase = await createServerSupabaseClient()
 
@@ -13,7 +14,7 @@ export async function getTrailersServer(
     )
 
   const { data, error } = await query
-    .limit(limit)
+    .range(offset, offset + limit - 1)
     .overrideTypes<Trailer[], { merge: false }>()
 
   if (error) {

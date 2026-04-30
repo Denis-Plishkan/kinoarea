@@ -10,13 +10,13 @@ export const MovieCard = ({
   id,
 }: Movie) => {
   return (
-    <Link href={`/movies/${id}`} className="group max-w-84">
-      <div className="relative overflow-hidden">
+    <Link href={`/movies/${id}`} className="group block w-full max-w-80">
+      <div className="relative aspect-[338/480] overflow-hidden">
         <Image
-          className="rounded"
+          className="rounded object-cover"
           src={poster_url ?? '/poster.png'}
-          width={338}
-          height={480}
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
           alt={title}
         />
         <p className="absolute top-2 right-2 h-6 w-10 rounded bg-green-500 text-center">

@@ -28,6 +28,8 @@ export const FilterTabs = ({
     <Tabs
       value={value}
       onChange={handleChange}
+      variant="scrollable"
+      allowScrollButtonsMobile
       sx={{
         '& .MuiTab-root': {
           color: 'gray',
@@ -37,7 +39,7 @@ export const FilterTabs = ({
           },
         },
         '& .MuiTabs-indicator': {
-          display: 'none',
+          background: '#fff'
         },
       }}
     >

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Trailer } from '@/types/trailers'
@@ -10,6 +10,7 @@ import 'swiper/css'
 
 interface TrailersSliderProps {
   trailers: Trailer[]
+  onLoadMore?: () => void
 }
 
 function getYoutubeId(url: string | null | undefined): string | null {
@@ -28,8 +29,8 @@ function getYoutubeId(url: string | null | undefined): string | null {
   return null
 }
 
-export const TrailersSlider = ({ trailers }: TrailersSliderProps) => {
-  const [activeIndex, setActiveIndex] = useState(0)
+export const TrailersSlider = ({ trailers, onLoadMore }: TrailersSliderProps) => {
+  const [activeId, setActiveId] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [badImages, setBadImages] = useState<Set<string>>(new Set())
 
@@ -37,14 +38,23 @@ export const TrailersSlider = ({ trailers }: TrailersSliderProps) => {
     setBadImages(prev => new Set(prev).add(id))
   }
 
-  const filteredTrailers = trailers.filter(trailer => {
-    const id = getYoutubeId(trailer.youtube_url)
-    return id && !badImages.has(id)
-  })
+  const filteredTrailers = useMemo(() =>
+    trailers.filter(trailer => {
+      const id = getYoutubeId(trailer.youtube_url)
+      return id && !badImages.has(id)
+    }),
+    [trailers, badImages]
+  )
 
-  const safeIndex = Math.min(activeIndex, filteredTrailers.length - 1)
-  const activeTrailer = filteredTrailers[safeIndex]
-  const videoId = activeTrailer ? getYoutubeId(activeTrailer.youtube_url) : null
+  const activeTrailer = useMemo(() =>
+    filteredTrailers.find(t => t.id === activeId) || filteredTrailers[0],
+    [filteredTrailers, activeId]
+  )
+
+  const videoId = useMemo(() =>
+    activeTrailer ? getYoutubeId(activeTrailer.youtube_url) : null,
+    [activeTrailer]
+  )
 
   if (filteredTrailers.length === 0) {
     return null
@@ -54,8 +64,8 @@ export const TrailersSlider = ({ trailers }: TrailersSliderProps) => {
     setIsPlaying(true)
   }
 
-  const handleThumbClick = (index: number) => {
-    setActiveIndex(index)
+  const handleThumbClick = (trailerId: string) => {
+    setActiveId(trailerId)
     setIsPlaying(false)
   }
 
@@ -70,7 +80,7 @@ export const TrailersSlider = ({ trailers }: TrailersSliderProps) => {
             className={styles.iframe}
           />
         ) : (
-          <div className={styles.preview} onClick={handlePlay}>
+          <div className={styles.preview} onClick={handlePlay} key={videoId}>
             {videoId && (
               <>
                 <Image
@@ -100,19 +110,20 @@ export const TrailersSlider = ({ trailers }: TrailersSliderProps) => {
       <Swiper
         spaceBetween={10}
         slidesPerView={2}
+        onReachEnd={onLoadMore}
         breakpoints={{
           768: { slidesPerView: 3 },
           1024: { slidesPerView: 4 }
         }}
         className={styles.thumbs}
       >
-        {filteredTrailers.map((trailer, index) => {
+        {filteredTrailers.map((trailer) => {
           const thumbId = getYoutubeId(trailer.youtube_url)!
           return (
             <SwiperSlide
               key={trailer.id}
-              className={index === safeIndex ? 'active' : ''}
-              onClick={() => handleThumbClick(index)}
+              className={trailer.id === activeTrailer?.id ? 'active' : ''}
+              onClick={() => handleThumbClick(trailer.id)}
             >
               <Image
                 src={`https://img.youtube.com/vi/${thumbId}/mqdefault.jpg`}
