@@ -1,0 +1,1604 @@
+openapi: 3.0.3
+info:
+  title: Kinoarea API
+  description: |
+    REST API для кинопортала Kinoarea.
+
+    Базируется на Supabase (PostgREST).
+
+    ## Аутентификация
+    Используй заголовки:
+    - `apikey`: твой anon или service_role ключ
+    - `Authorization`: Bearer {access_token} для авторизованных запросов
+
+  version: 1.0.0
+  contact:
+    name: Kinoarea Support
+
+servers:
+  - url: https://{project_id}.supabase.co/rest/v1
+    description: Supabase REST API
+    variables:
+      project_id:
+        default: your-project-id
+        description: ID проекта Supabase
+
+security:
+  - apiKey: []
+  - bearerAuth: []
+
+tags:
+  - name: Movies
+    description: Фильмы, сериалы, мультфильмы
+  - name: Persons
+    description: Актёры, режиссёры и другие персоны
+  - name: Genres
+    description: Жанры фильмов
+  - name: Countries
+    description: Страны производства
+  - name: Trailers
+    description: Трейлеры фильмов (YouTube)
+  - name: Images
+    description: Постеры и кадры
+  - name: Awards
+    description: Награды фильмов
+  - name: Users
+    description: Профили пользователей
+  - name: Ratings
+    description: Оценки фильмов
+  - name: Reviews
+    description: Рецензии на фильмы
+  - name: Comments
+    description: Комментарии
+  - name: News
+    description: Новости
+  - name: Collections
+    description: Подборки фильмов
+
+paths:
+  # ==================== MOVIES ====================
+  /movies:
+    get:
+      tags: [Movies]
+      summary: Получить список фильмов
+      description: Возвращает список фильмов с пагинацией и фильтрацией
+      parameters:
+        - $ref: '#/components/parameters/select'
+        - $ref: '#/components/parameters/order'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [movie, series, cartoon]
+          description: Фильтр по типу контента
+        - name: year
+          in: query
+          schema:
+            type: string
+          description: "Фильтр по году (eq.2024, gte.2020, lte.2024)"
+        - name: is_in_cinema
+          in: query
+          schema:
+            type: string
+          description: "Сейчас в кино (eq.true)"
+        - name: is_expected
+          in: query
+          schema:
+            type: string
+          description: "Ожидаемые (eq.true)"
+        - name: rating_kinoarea
+          in: query
+          schema:
+            type: string
+          description: "Фильтр по рейтингу (gte.7)"
+      responses:
+        '200':
+          description: Список фильмов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movie'
+              examples:
+                movies:
+                  value:
+                    - id: "550e8400-e29b-41d4-a716-446655440000"
+                      title: "Побег из Претории"
+                      original_title: "Escape from Pretoria"
+                      slug: "escape-from-pretoria"
+                      type: "movie"
+                      year: 2020
+                      rating_kinoarea: 7.5
+                      rating_imdb: 6.8
+                      poster_url: "https://example.com/poster.jpg"
+    post:
+      tags: [Movies]
+      summary: Создать фильм
+      description: Требует service_role ключ
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieCreate'
+      responses:
+        '201':
+          description: Фильм создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+
+  /movies?slug=eq.{slug}:
+    get:
+      tags: [Movies]
+      summary: Получить фильм по slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "escape-from-pretoria"
+      responses:
+        '200':
+          description: Фильм
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movie'
+
+  /movies?id=eq.{id}:
+    get:
+      tags: [Movies]
+      summary: Получить фильм по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Фильм
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movie'
+    patch:
+      tags: [Movies]
+      summary: Обновить фильм
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieUpdate'
+      responses:
+        '200':
+          description: Фильм обновлён
+    delete:
+      tags: [Movies]
+      summary: Удалить фильм
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Фильм удалён
+
+  # ==================== PERSONS ====================
+  /persons:
+    get:
+      tags: [Persons]
+      summary: Получить список персон
+      parameters:
+        - $ref: '#/components/parameters/select'
+        - $ref: '#/components/parameters/order'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - name: gender
+          in: query
+          schema:
+            type: string
+            enum: [male, female, other]
+        - name: name
+          in: query
+          schema:
+            type: string
+          description: "Поиск по имени (ilike.*Ди Каприо*)"
+      responses:
+        '200':
+          description: Список персон
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Person'
+    post:
+      tags: [Persons]
+      summary: Создать персону
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonCreate'
+      responses:
+        '201':
+          description: Персона создана
+
+  /persons?slug=eq.{slug}:
+    get:
+      tags: [Persons]
+      summary: Получить персону по slug
+      responses:
+        '200':
+          description: Персона
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Person'
+
+  # ==================== MOVIE_PERSONS ====================
+  /movie_persons:
+    get:
+      tags: [Persons]
+      summary: Получить связи фильм-персона
+      description: Роли актёров, режиссёров и т.д. в фильмах
+      parameters:
+        - name: movie_id
+          in: query
+          schema:
+            type: string
+          description: "Фильтр по фильму (eq.uuid)"
+        - name: person_id
+          in: query
+          schema:
+            type: string
+          description: "Фильтр по персоне (eq.uuid)"
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [actor, director, writer, producer, composer, cinematographer, editor]
+        - name: select
+          in: query
+          schema:
+            type: string
+          example: "*,movie:movies(*),person:persons(*)"
+          description: Включить связанные данные
+      responses:
+        '200':
+          description: Список связей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MoviePerson'
+
+  # ==================== GENRES ====================
+  /genres:
+    get:
+      tags: [Genres]
+      summary: Получить все жанры
+      responses:
+        '200':
+          description: Список жанров
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Genre'
+              example:
+                - id: "550e8400-e29b-41d4-a716-446655440001"
+                  name: "Боевик"
+                  slug: "action"
+                - id: "550e8400-e29b-41d4-a716-446655440002"
+                  name: "Комедия"
+                  slug: "comedy"
+
+  /movie_genres:
+    get:
+      tags: [Genres]
+      summary: Получить жанры фильмов
+      parameters:
+        - name: movie_id
+          in: query
+          schema:
+            type: string
+        - name: select
+          in: query
+          schema:
+            type: string
+          example: "movie_id,genre:genres(id,name,slug)"
+      responses:
+        '200':
+          description: Связи фильм-жанр
+
+  # ==================== COUNTRIES ====================
+  /countries:
+    get:
+      tags: [Countries]
+      summary: Получить все страны
+      responses:
+        '200':
+          description: Список стран
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Country'
+
+  # ==================== TRAILERS ====================
+  /trailers:
+    get:
+      tags: [Trailers]
+      summary: Получить трейлеры
+      parameters:
+        - name: movie_id
+          in: query
+          schema:
+            type: string
+          description: "Фильтр по фильму (eq.uuid)"
+        - name: is_main
+          in: query
+          schema:
+            type: string
+          description: "Только основные (eq.true)"
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Список трейлеров
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trailer'
+              example:
+                - id: "uuid"
+                  movie_id: "uuid"
+                  title: "Побег из Претории - Официальный трейлер"
+                  youtube_url: "https://www.youtube.com/watch?v=abc123"
+                  youtube_id: "abc123"
+                  is_main: true
+    post:
+      tags: [Trailers]
+      summary: Добавить трейлер
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrailerCreate'
+      responses:
+        '201':
+          description: Трейлер добавлен
+
+  # ==================== IMAGES ====================
+  /movie_images:
+    get:
+      tags: [Images]
+      summary: Получить изображения фильма
+      parameters:
+        - name: movie_id
+          in: query
+          schema:
+            type: string
+        - name: image_type
+          in: query
+          schema:
+            type: string
+            enum: [poster, backdrop, still, behind_scenes]
+      responses:
+        '200':
+          description: Список изображений
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MovieImage'
+
+  /person_images:
+    get:
+      tags: [Images]
+      summary: Получить фото персоны
+      parameters:
+        - name: person_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Список фото
+
+  # ==================== AWARDS ====================
+  /awards:
+    get:
+      tags: [Awards]
+      summary: Получить награды
+      parameters:
+        - name: movie_id
+          in: query
+          schema:
+            type: string
+        - name: person_id
+          in: query
+          schema:
+            type: string
+        - name: is_winner
+          in: query
+          schema:
+            type: string
+          description: "Только победители (eq.true)"
+      responses:
+        '200':
+          description: Список наград
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Award'
+
+  # ==================== PROFILES ====================
+  /profiles:
+    get:
+      tags: [Users]
+      summary: Получить профили пользователей
+      parameters:
+        - name: username
+          in: query
+          schema:
+            type: string
+          description: "Поиск по username (eq.username)"
+        - name: is_public
+          in: query
+          schema:
+            type: string
+          description: "Только публичные (eq.true)"
+      responses:
+        '200':
+          description: Список профилей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Profile'
+
+  /profiles?id=eq.{id}:
+    get:
+      tags: [Users]
+      summary: Получить профиль по ID
+      responses:
+        '200':
+          description: Профиль пользователя
+    patch:
+      tags: [Users]
+      summary: Обновить свой профиль
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdate'
+      responses:
+        '200':
+          description: Профиль обновлён
+
+  # ==================== RATINGS ====================
+  /user_ratings:
+    get:
+      tags: [Ratings]
+      summary: Получить оценки
+      parameters:
+        - name: movie_id
+          in: query
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: select
+          in: query
+          schema:
+            type: string
+          example: "*,movie:movies(id,title,poster_url),user:profiles(id,username,avatar_url)"
+      responses:
+        '200':
+          description: Список оценок
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserRating'
+    post:
+      tags: [Ratings]
+      summary: Поставить оценку фильму
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRatingCreate'
+            example:
+              movie_id: "550e8400-e29b-41d4-a716-446655440000"
+              rating: 8
+      responses:
+        '201':
+          description: Оценка сохранена
+
+  /user_ratings?user_id=eq.{user_id}&movie_id=eq.{movie_id}:
+    patch:
+      tags: [Ratings]
+      summary: Изменить оценку
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 10
+      responses:
+        '200':
+          description: Оценка обновлена
+    delete:
+      tags: [Ratings]
+      summary: Удалить оценку
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Оценка удалена
+
+  # ==================== REVIEWS ====================
+  /reviews:
+    get:
+      tags: [Reviews]
+      summary: Получить рецензии
+      parameters:
+        - name: movie_id
+          in: query
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: is_positive
+          in: query
+          schema:
+            type: string
+          description: "Фильтр: eq.true (положительные), eq.false (отрицательные)"
+        - name: select
+          in: query
+          schema:
+            type: string
+          example: "*,user:profiles(id,username,avatar_url)"
+        - $ref: '#/components/parameters/order'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: Список рецензий
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+    post:
+      tags: [Reviews]
+      summary: Написать рецензию
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewCreate'
+      responses:
+        '201':
+          description: Рецензия создана
+
+  # ==================== COMMENTS ====================
+  /comments:
+    get:
+      tags: [Comments]
+      summary: Получить комментарии
+      parameters:
+        - name: entity_type
+          in: query
+          schema:
+            type: string
+            enum: [person, news, collection]
+        - name: entity_id
+          in: query
+          schema:
+            type: string
+        - name: select
+          in: query
+          schema:
+            type: string
+          example: "*,user:profiles(id,username,avatar_url)"
+      responses:
+        '200':
+          description: Список комментариев
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+    post:
+      tags: [Comments]
+      summary: Добавить комментарий
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        '201':
+          description: Комментарий добавлен
+
+  # ==================== NEWS ====================
+  /news:
+    get:
+      tags: [News]
+      summary: Получить новости
+      parameters:
+        - name: is_published
+          in: query
+          schema:
+            type: string
+          description: "Только опубликованные (eq.true)"
+        - name: related_movie_id
+          in: query
+          schema:
+            type: string
+        - name: related_person_id
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/order'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: Список новостей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/News'
+
+  /news?slug=eq.{slug}:
+    get:
+      tags: [News]
+      summary: Получить новость по slug
+      responses:
+        '200':
+          description: Новость
+
+  # ==================== COLLECTIONS ====================
+  /collections:
+    get:
+      tags: [Collections]
+      summary: Получить подборки
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [kinoarea, series, direction, critic, awards, years, genres]
+        - name: is_official
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Список подборок
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Collection'
+
+  /collections?slug=eq.{slug}:
+    get:
+      tags: [Collections]
+      summary: Получить подборку по slug
+      responses:
+        '200':
+          description: Подборка
+
+  /collection_movies:
+    get:
+      tags: [Collections]
+      summary: Получить фильмы подборки
+      parameters:
+        - name: collection_id
+          in: query
+          schema:
+            type: string
+        - name: select
+          in: query
+          schema:
+            type: string
+          example: "*,movie:movies(*)"
+        - name: order
+          in: query
+          schema:
+            type: string
+          example: "position.asc"
+      responses:
+        '200':
+          description: Фильмы подборки
+
+  # ==================== USER LISTS ====================
+  /user_lists:
+    get:
+      tags: [Users]
+      summary: Получить списки пользователя
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: is_public
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Списки фильмов
+    post:
+      tags: [Users]
+      summary: Создать список
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                is_public:
+                  type: boolean
+                  default: true
+      responses:
+        '201':
+          description: Список создан
+
+  /user_list_movies:
+    get:
+      tags: [Users]
+      summary: Получить фильмы из списка
+      parameters:
+        - name: list_id
+          in: query
+          schema:
+            type: string
+        - name: select
+          in: query
+          schema:
+            type: string
+          example: "*,movie:movies(id,title,poster_url,year,rating_kinoarea)"
+      responses:
+        '200':
+          description: Фильмы списка
+    post:
+      tags: [Users]
+      summary: Добавить фильм в список
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [list_id, movie_id]
+              properties:
+                list_id:
+                  type: string
+                  format: uuid
+                movie_id:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Фильм добавлен
+
+  # ==================== FRIENDSHIPS ====================
+  /friendships:
+    get:
+      tags: [Users]
+      summary: Получить друзей
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, accepted, blocked]
+        - name: select
+          in: query
+          schema:
+            type: string
+          example: "*,friend:profiles!friend_id(id,username,avatar_url)"
+      responses:
+        '200':
+          description: Список друзей
+    post:
+      tags: [Users]
+      summary: Отправить запрос в друзья
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [friend_id]
+              properties:
+                friend_id:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Запрос отправлен
+
+  # ==================== BOX OFFICE ====================
+  /box_office_weekly:
+    get:
+      tags: [Movies]
+      summary: Получить кассовые сборы
+      parameters:
+        - name: country
+          in: query
+          schema:
+            type: string
+          example: "eq.russia"
+        - name: week_start
+          in: query
+          schema:
+            type: string
+          description: "Фильтр по дате (gte.2024-01-01)"
+        - name: order
+          in: query
+          schema:
+            type: string
+          example: "rank.asc"
+        - name: select
+          in: query
+          schema:
+            type: string
+          example: "*,movie:movies(id,title,poster_url)"
+      responses:
+        '200':
+          description: Кассовые сборы
+
+  # ==================== EMAIL & CONTACT ====================
+  /email_subscriptions:
+    post:
+      tags: [Users]
+      summary: Подписаться на рассылку
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '201':
+          description: Подписка оформлена
+
+  /contact_messages:
+    post:
+      tags: [Users]
+      summary: Отправить сообщение
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, message]
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                subject:
+                  type: string
+                message:
+                  type: string
+      responses:
+        '201':
+          description: Сообщение отправлено
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: apikey
+      description: Supabase anon или service_role ключ
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен пользователя от Supabase Auth
+
+  parameters:
+    select:
+      name: select
+      in: query
+      schema:
+        type: string
+      description: "Выбор полей и связей (PostgREST select)"
+      example: "*"
+    order:
+      name: order
+      in: query
+      schema:
+        type: string
+      description: "Сортировка (поле.asc или поле.desc)"
+      example: "created_at.desc"
+    limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 20
+      description: "Лимит записей"
+    offset:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        default: 0
+      description: "Смещение для пагинации"
+
+  schemas:
+    # ==================== MOVIE ====================
+    Movie:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: "Побег из Претории"
+        original_title:
+          type: string
+          example: "Escape from Pretoria"
+        slug:
+          type: string
+          example: "escape-from-pretoria"
+        type:
+          type: string
+          enum: [movie, series, cartoon]
+        year:
+          type: integer
+          example: 2020
+        release_date:
+          type: string
+          format: date
+        runtime_minutes:
+          type: integer
+          example: 106
+        description:
+          type: string
+        tagline:
+          type: string
+        rating_kinoarea:
+          type: number
+          format: float
+          example: 7.5
+        rating_imdb:
+          type: number
+          format: float
+          example: 6.8
+        votes_count:
+          type: integer
+        budget:
+          type: integer
+          example: 15000000
+        box_office_world:
+          type: integer
+        poster_url:
+          type: string
+          format: uri
+        backdrop_url:
+          type: string
+          format: uri
+        mpaa:
+          type: string
+          enum: [G, PG, PG-13, R, NC-17]
+        is_in_cinema:
+          type: boolean
+        is_expected:
+          type: boolean
+        premiere_russia:
+          type: string
+          format: date
+        premiere_world:
+          type: string
+          format: date
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    MovieCreate:
+      type: object
+      required: [title, slug]
+      properties:
+        title:
+          type: string
+        original_title:
+          type: string
+        slug:
+          type: string
+        type:
+          type: string
+          enum: [movie, series, cartoon]
+          default: movie
+        year:
+          type: integer
+        release_date:
+          type: string
+          format: date
+        runtime_minutes:
+          type: integer
+        description:
+          type: string
+        tagline:
+          type: string
+        rating_imdb:
+          type: number
+        budget:
+          type: integer
+        box_office_world:
+          type: integer
+        poster_url:
+          type: string
+        backdrop_url:
+          type: string
+        mpaa:
+          type: string
+          enum: [G, PG, PG-13, R, NC-17]
+        is_in_cinema:
+          type: boolean
+        is_expected:
+          type: boolean
+        premiere_russia:
+          type: string
+          format: date
+        premiere_world:
+          type: string
+          format: date
+
+    MovieUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        original_title:
+          type: string
+        description:
+          type: string
+        rating_imdb:
+          type: number
+        is_in_cinema:
+          type: boolean
+        is_expected:
+          type: boolean
+
+    # ==================== PERSON ====================
+    Person:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "Леонардо ДиКаприо"
+        original_name:
+          type: string
+          example: "Leonardo DiCaprio"
+        slug:
+          type: string
+          example: "leonardo-dicaprio"
+        photo_url:
+          type: string
+          format: uri
+        gender:
+          type: string
+          enum: [male, female, other]
+        birth_date:
+          type: string
+          format: date
+        death_date:
+          type: string
+          format: date
+        birth_place:
+          type: string
+          example: "Лос-Анджелес, Калифорния, США"
+        height_cm:
+          type: integer
+          example: 183
+        biography:
+          type: string
+        career_start:
+          type: integer
+          example: 1989
+        total_movies:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    PersonCreate:
+      type: object
+      required: [name, slug]
+      properties:
+        name:
+          type: string
+        original_name:
+          type: string
+        slug:
+          type: string
+        photo_url:
+          type: string
+        gender:
+          type: string
+          enum: [male, female, other]
+        birth_date:
+          type: string
+          format: date
+        birth_place:
+          type: string
+        height_cm:
+          type: integer
+        biography:
+          type: string
+
+    MoviePerson:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        movie_id:
+          type: string
+          format: uuid
+        person_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [actor, director, writer, producer, composer, cinematographer, editor]
+        character_name:
+          type: string
+          example: "Джек Доусон"
+        billing_order:
+          type: integer
+
+    # ==================== GENRE & COUNTRY ====================
+    Genre:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "Боевик"
+        slug:
+          type: string
+          example: "action"
+
+    Country:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "США"
+        code:
+          type: string
+          example: "USA"
+
+    # ==================== TRAILER ====================
+    Trailer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        movie_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        youtube_url:
+          type: string
+          format: uri
+          example: "https://www.youtube.com/watch?v=abc123"
+        youtube_id:
+          type: string
+          example: "abc123"
+        thumbnail_url:
+          type: string
+          format: uri
+        duration_seconds:
+          type: integer
+        is_main:
+          type: boolean
+
+    TrailerCreate:
+      type: object
+      required: [movie_id, youtube_url]
+      properties:
+        movie_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        youtube_url:
+          type: string
+        youtube_id:
+          type: string
+        thumbnail_url:
+          type: string
+        duration_seconds:
+          type: integer
+        is_main:
+          type: boolean
+          default: false
+
+    # ==================== IMAGES ====================
+    MovieImage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        movie_id:
+          type: string
+          format: uuid
+        image_url:
+          type: string
+          format: uri
+        image_type:
+          type: string
+          enum: [poster, backdrop, still, behind_scenes]
+        width:
+          type: integer
+        height:
+          type: integer
+        is_main:
+          type: boolean
+
+    # ==================== AWARD ====================
+    Award:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "Оскар"
+        year:
+          type: integer
+          example: 2016
+        category:
+          type: string
+          example: "Лучший актёр"
+        movie_id:
+          type: string
+          format: uuid
+        person_id:
+          type: string
+          format: uuid
+        is_winner:
+          type: boolean
+
+    # ==================== PROFILE ====================
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        display_name:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+        bio:
+          type: string
+        country:
+          type: string
+        city:
+          type: string
+        is_public:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    ProfileUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+        display_name:
+          type: string
+        avatar_url:
+          type: string
+        bio:
+          type: string
+        country:
+          type: string
+        city:
+          type: string
+        social_vk:
+          type: string
+        social_telegram:
+          type: string
+        is_public:
+          type: boolean
+
+    # ==================== RATING ====================
+    UserRating:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        movie_id:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 10
+        created_at:
+          type: string
+          format: date-time
+
+    UserRatingCreate:
+      type: object
+      required: [movie_id, rating]
+      properties:
+        movie_id:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 10
+
+    # ==================== REVIEW ====================
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        movie_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        content:
+          type: string
+        is_positive:
+          type: boolean
+        likes_count:
+          type: integer
+        dislikes_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    ReviewCreate:
+      type: object
+      required: [movie_id, content]
+      properties:
+        movie_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        content:
+          type: string
+        is_positive:
+          type: boolean
+
+    # ==================== COMMENT ====================
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        entity_type:
+          type: string
+          enum: [person, news, collection]
+        entity_id:
+          type: string
+          format: uuid
+        parent_id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        likes_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    CommentCreate:
+      type: object
+      required: [entity_type, entity_id, content]
+      properties:
+        entity_type:
+          type: string
+          enum: [person, news, collection]
+        entity_id:
+          type: string
+          format: uuid
+        parent_id:
+          type: string
+          format: uuid
+        content:
+          type: string
+
+    # ==================== NEWS ====================
+    News:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        slug:
+          type: string
+        excerpt:
+          type: string
+        content:
+          type: string
+        cover_image_url:
+          type: string
+          format: uri
+        author_id:
+          type: string
+          format: uuid
+        views_count:
+          type: integer
+        comments_count:
+          type: integer
+        related_movie_id:
+          type: string
+          format: uuid
+        related_person_id:
+          type: string
+          format: uuid
+        is_published:
+          type: boolean
+        published_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    # ==================== COLLECTION ====================
+    Collection:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: "ТОП 250 лучших фильмов"
+        slug:
+          type: string
+          example: "top-250"
+        description:
+          type: string
+        cover_image_url:
+          type: string
+          format: uri
+        category:
+          type: string
+          enum: [kinoarea, series, direction, critic, awards, years, genres]
+        movies_count:
+          type: integer
+        is_official:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
