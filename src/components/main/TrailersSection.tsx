@@ -16,7 +16,7 @@ export const TrailersSection = () => {
 
   useEffect(() => {
     startTransition(async () => {
-      const newTrailers = await loadMoreTrailers(limit, offset)
+      const newTrailers = await loadMoreTrailers(limit, 0)
       setTrailers(newTrailers)
       setOffset(limit)
     })
