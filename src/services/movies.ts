@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/client'
-import { Movie } from '@/types/movie'
+import { Movie, Genre } from '@/types/movie'
+
+type MovieFromDB = Omit<Movie, 'genres'> & { genres: { genres: Genre }[] }
 
 export async function getMovies() {
   const supabase = createClient()
@@ -22,7 +24,7 @@ export async function getMoviesInCinema(limit: number) {
     )
     .eq('is_in_cinema', true)
     .limit(limit)
-    .overrideTypes<Movie[], { merge: false }>()
+    .overrideTypes<MovieFromDB[], { merge: false }>()
 
   const movies = data?.map(movie => ({
     ...movie,

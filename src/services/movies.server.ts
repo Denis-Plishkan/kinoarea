@@ -1,5 +1,9 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { Movie } from '@/types/movie'
+import { Movie, Genre } from '@/types/movie'
+
+type MovieFromDB = Omit<Movie, 'genres'> & {
+  genres: { genres: Genre }[]
+}
 
 export async function getMoviesInCinemaServer(
   limit: number,
@@ -19,7 +23,7 @@ export async function getMoviesInCinemaServer(
 
   const { data, error } = await query
     .limit(limit)
-    .overrideTypes<Movie[], { merge: false }>()
+    .overrideTypes<MovieFromDB[]>()
 
   if (error) {
     console.error('Error fetching movies:', error)
