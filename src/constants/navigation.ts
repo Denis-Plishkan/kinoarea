@@ -17,3 +17,14 @@ export const navIsCinema = [
     'Триллер',
     'Драма',
   ]
+
+
+export const navPopularMovie = [
+    'Все время',
+    '2025',
+    '2024',
+    '2023',
+    '2022',
+    '2021',
+    '2020',
+  ]

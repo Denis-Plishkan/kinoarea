@@ -1,2 +1,2 @@
 export * from './FilterTabs'
-export * from './Slider'
+export * from './TrailerSlider'

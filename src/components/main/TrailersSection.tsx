@@ -9,19 +9,26 @@ import Link from 'next/link'
 
 export const TrailersSection = () => {
   const [trailers, setTrailers] = useState<Trailer[]>([])
-  const [, startTransition] = useTransition()
+  const [offset, setOffset] = useState(0)
+  const [isPending, startTransition] = useTransition()
 
-  const limit = 100
+  const limit = 10
 
   useEffect(() => {
     startTransition(async () => {
-      const newTrailers = await loadMoreTrailers(limit)
+      const newTrailers = await loadMoreTrailers(limit, offset)
       setTrailers(newTrailers)
+      setOffset(limit)
     })
-  }, [limit])
+  }, [])
 
-  if (trailers.length === 0) {
-    return null
+  const handleLoadMore = () => {
+    if (isPending) return
+    startTransition(async () => {
+      const newTrailers = await loadMoreTrailers(limit, offset)
+      setTrailers(prev => [...prev, ...newTrailers])
+      setOffset(prev => prev + limit)
+    }) 
   }
 
   return (
@@ -36,7 +43,7 @@ export const TrailersSection = () => {
         </Link>
       </div>
       <div className="mt-10 mb-10 flex justify-center">
-        <TrailersSlider trailers={trailers} />
+        <TrailersSlider trailers={trailers} onLoadMore={handleLoadMore}/>
       </div>
     </>
   )
