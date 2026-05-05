@@ -5,7 +5,7 @@ import Tab from '@mui/material/Tab'
 import { useState } from 'react'
 
 interface FilterTabsProps {
-  items: string[]
+  items?: string[]
   defaultValue?: number
   onChange?: (value: string | undefined, index: number) => void
   allLabel?: string
@@ -43,7 +43,7 @@ export const FilterTabs = ({
         },
       }}
     >
-      {items.map(item => (
+      {items?.map(item => (
         <Tab key={item} label={item} />
       ))}
     </Tabs>

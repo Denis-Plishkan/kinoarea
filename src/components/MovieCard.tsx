@@ -11,7 +11,7 @@ export const MovieCard = ({
 }: Movie) => {
   return (
     <Link href={`/movies/${id}`} className="group block w-full max-w-80">
-      <div className="relative aspect-[338/480] overflow-hidden">
+      <div className="relative aspect-338/480 overflow-hidden">
         <Image
           className="rounded object-cover"
           src={poster_url ?? '/poster.png'}

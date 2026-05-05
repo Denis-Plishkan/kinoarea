@@ -1,6 +1,7 @@
 'use server'
 
 import { getMoviesServer, getMoviesCount } from '@/services/movies.server'
+import { getPersonServer } from '@/services/persons.server'
 import { getTrailersServer } from '@/services/trailers.server'
 
 export async function fetchMoviesCount(year?: number) {
@@ -20,4 +21,8 @@ export async function loadMoreMovies(
 
 export async function loadMoreTrailers(limit: number, offset: number) {
   return getTrailersServer(limit, offset)
+}
+
+export async function loadMorePersons() {
+  return getPersonServer()
 }

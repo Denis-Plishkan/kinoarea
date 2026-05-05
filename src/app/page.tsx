@@ -1,4 +1,9 @@
-import { CinemaSection, PopularMovieSection, TrailersSection } from '@/components/main'
+import {
+  CinemaSection,
+  PopularMovieSection,
+  PopularPersonSection,
+  TrailersSection,
+} from '@/components/main'
 import { getMoviesServer } from '@/services/movies.server'
 
 export default async function MoviesPage() {
@@ -8,7 +13,8 @@ export default async function MoviesPage() {
     <>
       <CinemaSection initialMovies={initialMovies} />
       <TrailersSection />
-      <PopularMovieSection/>
+      <PopularMovieSection />
+      <PopularPersonSection/>
     </>
   )
 }

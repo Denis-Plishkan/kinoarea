@@ -28,3 +28,12 @@ export const navPopularMovie = [
     '2021',
     '2020',
   ]
+
+
+export const navPopularPerson = [
+    'За год',
+    'За месяц',
+    'За неделю',
+  ]
+
+
